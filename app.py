@@ -96,7 +96,7 @@ def find_best(df):
 
                     proj = stretch(bw.values, n_proj)
                     r    = pearson_r(proj, rw.values[:n_known])
-                    if r and r > 55:
+                    if r and r > 60:
                         has_future = n_proj > len(rw)
                         entry = {
                             'date':       sd.strftime('%Y-%m-%d'),
