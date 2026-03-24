@@ -96,7 +96,7 @@ def find_best(df):
 
                     proj = stretch(bw.values, n_proj)
                     r    = pearson_r(proj, rw.values[:n_known])
-                    if r and r > 60:
+                    if r and r > 80:
                         has_future = n_proj > len(rw)
                         entry = {
                             'date':       sd.strftime('%Y-%m-%d'),
@@ -260,7 +260,7 @@ HTML = """
 </div>
 {% else %}
 <div class="card">
-  <p style="color:#ff9800">⚠️ الدورة مكتملة — جرّب تاريخاً أحدث</p>
+  <p style="color:#f44336">⚠️ البيانات غير دقيقة — لا يوجد إسقاط مستقبلي بتشابه كافٍ لهذا السهم</p>
 </div>
 {% endif %}
 
@@ -306,7 +306,7 @@ def index():
     results = find_best(df)
     if not results:
         return render_template_string(HTML, ticker=ticker,
-                                      error="لم توجد بصمة مناسبة (تشابه > 60%)")
+                                      error="⚠️ لم توجد بصمة بتشابه كافٍ — البيانات غير دقيقة لهذا السهم")
 
     best = results[0]
     fut  = project(df, best)
