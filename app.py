@@ -67,7 +67,9 @@ def find_best(df):
         if sy == 11 or smd == 11:
             candidates.append(d)
 
-    results = []
+    future_results  = []  # بصمات لها إسقاط مستقبلي
+    history_results = []  # بصمات تاريخية للمقارنة فقط
+
     for sd in candidates:
         for bm in [3, 5, 8, 10, 13]:
             try:
@@ -75,30 +77,48 @@ def find_best(df):
                 end_b = sd + pd.DateOffset(months=bm)
                 basma = df[(df['Date'] >= sd) & (df['Date'] < end_b)]
                 real  = df[df['Date'] >= end_b].reset_index(drop=True)
-                if len(basma) < 10 or len(real) < 20:
+                if len(basma) < 10 or len(real) < 10:
                     continue
                 p0r = float(real['Close'].iloc[0])
                 bw  = (basma.set_index('Date')['Close'].resample('W').last().dropna() / p0 - 1) * 100
                 rw  = (real.set_index('Date')['Close'].resample('W').last().dropna() / p0r - 1) * 100
+
                 for pp in range(6):
                     ratio  = PHI ** pp
                     n_proj = int(len(bw) * ratio)
-                    if n_proj < 5 or n_proj > len(rw):
+                    if n_proj < 5:
                         continue
+
+                    # عدد الأسابيع المعروفة (حدثت فعلاً)
+                    n_known = min(n_proj, len(rw))
+                    if n_known < 10:
+                        continue
+
                     proj = stretch(bw.values, n_proj)
-                    r    = pearson_r(proj, rw.values[:n_proj])
-                    if r and r > 60:
-                        results.append({
-                            'date': sd.strftime('%Y-%m-%d'),
-                            'months': bm,
-                            'phi': pp,
-                            'r': r,
-                        })
+                    r    = pearson_r(proj, rw.values[:n_known])
+                    if r and r > 55:
+                        has_future = n_proj > len(rw)
+                        entry = {
+                            'date':       sd.strftime('%Y-%m-%d'),
+                            'months':     bm,
+                            'phi':        pp,
+                            'r':          r,
+                            'has_future': has_future,
+                        }
+                        if has_future:
+                            future_results.append(entry)
+                        else:
+                            history_results.append(entry)
             except:
                 continue
 
-    results.sort(key=lambda x: x['r'], reverse=True)
-    return results[:5]
+    # الأولوية للبصمات التي لها مستقبل
+    future_results.sort(key=lambda x: x['r'], reverse=True)
+    history_results.sort(key=lambda x: x['r'], reverse=True)
+
+    if future_results:
+        return future_results[:5]
+    return history_results[:5]
 
 def project(df, best):
     sd    = pd.Timestamp(best['date'])
