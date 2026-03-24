@@ -13,8 +13,8 @@ PHI = 1.6180339887
 # ── Core functions ────────────────────────────────────────────
 
 def load(ticker):
-    # آخر 6 سنوات فقط لتسريع الحساب
-    df = yf.download(ticker, period='6y', auto_adjust=True, progress=False)
+    # آخر 10 سنوات
+    df = yf.download(ticker, period='10y', auto_adjust=True, progress=False)
     if df.empty:
         return None
     df = df[['Close']].reset_index()
@@ -112,13 +112,12 @@ def find_best(df):
             except:
                 continue
 
-    # الأولوية للبصمات التي لها مستقبل
     future_results.sort(key=lambda x: x['r'], reverse=True)
     history_results.sort(key=lambda x: x['r'], reverse=True)
 
-    if future_results:
-        return future_results[:5]
-    return history_results[:5]
+    # الأولوية للبصمات المستقبلية — وإلا أفضل تاريخية
+    combined = future_results[:5] if future_results else history_results[:5]
+    return combined
 
 def project(df, best):
     sd    = pd.Timestamp(best['date'])
