@@ -139,12 +139,21 @@ def project(df, best):
     p_now  = float(df['Close'].iloc[-1])
     last_date = df['Date'].iloc[-1]
     milestones = []
+    last_val = proj[known - 1] if known > 0 else 0
+    base_level = 1 + last_val / 100
+
     for i, val in enumerate(future):
         if i % 13 == 0 or i == len(future) - 1:
             weeks_ahead = i + 1
             fut_date  = last_date + pd.Timedelta(weeks=weeks_ahead)
-            fut_pct   = val - (proj[known - 1] if known > 0 else 0)
-            fut_price = p_now * (1 + fut_pct / 100)
+            # نسبة التغيير بالنسبة للسعر الحالي فعلياً
+            if base_level != 0:
+                ratio     = (1 + val / 100) / base_level
+                fut_price = p_now * ratio
+                fut_pct   = (ratio - 1) * 100
+            else:
+                fut_price = p_now
+                fut_pct   = 0
             milestones.append((fut_date, fut_price, fut_pct))
     return {
         'p_now': p_now,
